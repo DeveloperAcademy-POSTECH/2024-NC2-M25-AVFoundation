@@ -131,8 +131,4 @@ iOSInjectionProject/
 /*.gcno
 **/xcshareddata/WorkspaceSettings.xcsettings
 
-# End of https://www.toptal.com/developers/gitignore/api/xcode,macos,swift
-*.mp3
-NC2-AudioPlayer/NC2-AudioPlayer/Supernova.mp3
-NC2-AudioPlayer/NC2-AudioPlayer/Assets.xcassets/Supernova.dataset/Supernova.mp3
 *.mp3
