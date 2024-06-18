@@ -41,7 +41,10 @@ struct ContentView: View {
                     }
                     self.isPlaying.toggle()
                 }) {
-                    Text(self.isPlaying ? "Pause" : "Play")
+                    Image(systemName: self.isPlaying ? "pause.circle" : "play.circle")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 50)
                 }
                 .padding()
                 .disabled(audioPlayer == nil) // 파일이 선택되지 않으면 버튼 비활성화
@@ -77,14 +80,34 @@ struct ContentView: View {
 
                 HStack {
                     Text("Playback Speed")
-                    Slider(value: $playbackRate, in: 0.5...2.0, step: 0.1, onEditingChanged: { _ in
-                        self.audioPlayer.enableRate = true
-                        self.audioPlayer.rate = self.playbackRate
-                    })
+                    Spacer()
+                    
+                    Button(action: {
+                        if self.playbackRate > 0.5 {
+                            self.playbackRate -= 0.1
+                            self.audioPlayer.rate = self.playbackRate
+                            self.audioPlayer.enableRate = true
+                        }
+                    }) {
+                        Image(systemName: "minus")
+                    }
+                    .padding(.horizontal, 10)
+                    
                     Text(String(format: "%.1fx", self.playbackRate))
+                    
+                    Button(action: {
+                        if self.playbackRate < 2.0 {
+                            self.playbackRate += 0.1
+                            self.audioPlayer.rate = self.playbackRate
+                            self.audioPlayer.enableRate = true
+                        }
+                    }) {
+                        Image(systemName: "plus")
+                    }
+                    .padding(.horizontal, 10)
                 }
                 .padding()
-                .disabled(audioPlayer == nil) // 파일이 선택되지 않으면 슬라이더 비활성화
+                .disabled(audioPlayer == nil)
 
                 List {
                     ForEach(markers, id: \.self) { marker in
@@ -99,7 +122,7 @@ struct ContentView: View {
                         }
                     }
                 }
-                .disabled(audioPlayer == nil) // 파일이 선택되지 않으면 리스트 비활성화
+                .disabled(audioPlayer == nil)
             }
         }
         
