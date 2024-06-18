@@ -22,93 +22,41 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
-            Button(action: {
-                self.initialiseAudioPlayer()
-            }) {
-                Text("Select Audio File")
-            }
-            .padding()
-
-            if let audioPlayer = audioPlayer {
-                Text("Selected file: \(audioPlayer.url?.lastPathComponent ?? "None")")
-            }
-
-            Button(action: {
-                if self.isPlaying {
-                    self.audioPlayer.pause()
-                } else {
-                    self.audioPlayer.play()
+            //MARK: - 음원 추가
+            VStack {
+                Button(action: {
+                    self.initialiseAudioPlayer()
+                }) {
+                    Text("Select Audio File")
                 }
-                self.isPlaying.toggle()
-            }) {
-                Image(systemName: self.isPlaying ? "pause.circle" : "play.circle")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 50)
+                .padding()
+                
+                ZStack {
+                    if let audioPlayer = audioPlayer {
+                        Text("Selected file: \(audioPlayer.url?.lastPathComponent ?? "None")")
+                    } else {
+                        Text("Selected file: None")
+                            .opacity(0)
+                    }
+                }
+                .frame(height: 20)
             }
-            .padding()
-            .disabled(audioPlayer == nil) // 파일이 선택되지 않으면 버튼 비활성화
+            .frame(maxWidth: .infinity)
+            
+            Spacer().frame(height: 20)
 
-            Slider(value: Binding(get: {
-                self.progress
-            }, set: { newValue in
-                self.progress = newValue
-                let newTime = TimeInterval(newValue) * self.duration
-                self.audioPlayer.currentTime = newTime
-                self.currentTime = newTime
-                self.formattedProgress = self.formattedTime(newTime)
-            }), in: 0...1)
-            .padding()
-            .disabled(audioPlayer == nil)
-
-            HStack {
-                Text("\(self.formattedProgress)")
-                Spacer()
-                Text("\(self.formattedDuration)")
-            }
-            .padding()
-
+            //MARK: - 현재 시간을 마커로 추가
             Button(action: {
-                self.markers.append(self.audioPlayer.currentTime) // 현재 시간을 마커로 추가
+                self.markers.append(self.audioPlayer.currentTime)
             }) {
                 Text("Add Marker")
             }
             .padding()
             .disabled(audioPlayer == nil) // 파일이 선택되지 않으면 버튼 비활성화
+            
+            Divider()
 
-            HStack {
-                Text("Playback Speed")
-                Spacer()
-
-                Button(action: {
-                    if self.playbackRate > 0.5 {
-                        self.playbackRate -= 0.1
-                        self.updatePlaybackRate()
-                    }
-                }) {
-                    Image(systemName: "minus")
-                }
-                .padding(.horizontal, 10)
-
-                Text(String(format: "%.1fx", self.playbackRate))
-                    .onTapGesture {
-                        self.playbackRate = 1.0
-                        self.updatePlaybackRate()
-                    }
-
-                Button(action: {
-                    if self.playbackRate < 2.0 {
-                        self.playbackRate += 0.1
-                        self.updatePlaybackRate()
-                    }
-                }) {
-                    Image(systemName: "plus")
-                }
-                .padding(.horizontal, 10)
-            }
-            .padding()
-            .disabled(audioPlayer == nil)
-
+            //MARK: - 마커 리스트
             List {
                 ForEach(markers, id: \.self) { marker in
                     Button(action: {
@@ -123,10 +71,118 @@ struct ContentView: View {
                 }
             }
             .disabled(audioPlayer == nil)
+            
+            //MARK: - 배속 조절
+            HStack {
+                Button(action: {
+                    if self.playbackRate > 0.5 {
+                        self.playbackRate -= 0.1
+                        self.updatePlaybackRate()
+                    }
+                }) {
+                    Image(systemName: "minus")
+                }
+                .padding(.horizontal, 10)
+                
+                ZStack {
+                    if self.playbackRate != 1.0 {
+                        Capsule()
+                            .fill(Color.gray)
+                    }
+                    
+                    Text(String(format: "%.1fx", self.playbackRate))
+                        .onTapGesture {
+                            self.playbackRate = 1.0
+                            self.updatePlaybackRate()
+                        }
+                }
+                .frame(width: 60, height: 30)
+                
+                Button(action: {
+                    if self.playbackRate < 2.0 {
+                        self.playbackRate += 0.1
+                        self.updatePlaybackRate()
+                    }
+                }) {
+                    Image(systemName: "plus")
+                }
+                .padding(.horizontal, 10)
+            }
+            .padding()
+            .disabled(audioPlayer == nil)
+            
+            //MARK: - 슬라이더를 이용한 현재 음원의 진행도
+            Slider(value: Binding(get: {
+                self.progress
+            }, set: { newValue in
+                self.progress = newValue
+                let newTime = TimeInterval(newValue) * self.duration
+                self.audioPlayer.currentTime = newTime
+                self.currentTime = newTime
+                self.formattedProgress = self.formattedTime(newTime)
+            }), in: 0...1)
+            .padding(.horizontal)
+            .disabled(audioPlayer == nil)
+            
+            HStack {
+                Text("\(self.formattedProgress)")
+                Spacer()
+                Text("\(self.formattedDuration)")
+            }
+            .padding(.horizontal)
+            
+            //MARK: - 음원 재생, 정지, 5초전, 후
+            HStack {
+                Button(action: {
+                    let newTime = max(self.audioPlayer.currentTime - 5, 0)
+                    self.audioPlayer.currentTime = newTime
+                    self.progress = CGFloat(newTime / self.duration)
+                    self.formattedProgress = self.formattedTime(newTime)
+                }) {
+                    Image(systemName: "gobackward.5")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 40)
+                }
+                .padding(.horizontal, 20)
+                Spacer()
+                
+                Button(action: {
+                    if self.isPlaying {
+                        self.audioPlayer.pause()
+                    } else {
+                        self.audioPlayer.play()
+                    }
+                    self.isPlaying.toggle()
+                }) {
+                    Image(systemName: self.isPlaying ? "pause.circle" : "play.circle")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 80)
+                }
+                Spacer()
+                
+                Button(action: {
+                    let newTime = min(self.audioPlayer.currentTime + 5, self.duration)
+                    self.audioPlayer.currentTime = newTime
+                    self.progress = CGFloat(newTime / self.duration)
+                    self.formattedProgress = self.formattedTime(newTime)
+                }) {
+                    Image(systemName: "goforward.5")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 40)
+                }
+                .padding(.horizontal, 20)
+            }
+            .padding()
+            .disabled(audioPlayer == nil)
+            
+            Spacer()
         }
     }
 
-    func initialiseAudioPlayer() {
+    private func initialiseAudioPlayer() {
         let formatter = DateComponentsFormatter()
         formatter.allowedUnits = [.minute, .second]
         formatter.unitsStyle = .positional
