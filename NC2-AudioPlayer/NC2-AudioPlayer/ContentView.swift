@@ -36,15 +36,6 @@ struct ContentView: View {
                 }
                 .padding()
                 
-//                ZStack {
-//                    if let audioPlayer = audioPlayer {
-//                        Text("Selected file: \(audioPlayer.url?.lastPathComponent ?? "None")")
-//                    } else {
-//                        Text("Selected file: None")
-//                            .opacity(0)
-//                    }
-//                }
-//                .frame(height: 20)
                 ZStack {
                     if let audioPlayer = audioPlayer {
                         HStack {
@@ -55,20 +46,46 @@ struct ContentView: View {
                                     .frame(width: 100, height: 100)
                                     .cornerRadius(10)
                             }
+                            
                             VStack (alignment: .leading) {
                                 Text("\(title)")
                                     .font(.subheadline)
                                 Text("\(artist)")
                                     .font(.caption)
+                                Spacer()
                             }
+                            .padding(.horizontal, 10)
+                            Spacer()
                             
                         }
                     } else {
-                        Text("Selected file: None")
-                            .opacity(0)
+                        HStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.gray)
+                                .frame(width: 100, height: 100)
+                                .overlay(
+                                    Image(systemName: "music.note")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 50, height: 50)
+                                        .foregroundColor(.white)
+                                )
+                            
+                            VStack (alignment: .leading) {
+                                Text("노래 제목")
+                                    .font(.subheadline)
+                                Text("아티스트")
+                                    .font(.caption)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 10)
+                            
+                            .foregroundStyle(.secondary)
+                            Spacer()
+                        }
                     }
                 }
-                .frame(height: 140)
+                .frame(height: 100)
                 .padding()
             }
             .frame(maxWidth: .infinity)
@@ -87,38 +104,40 @@ struct ContentView: View {
             Divider()
 
             //MARK: - 마커 리스트
-            VStack {
-                ForEach(markers, id: \.self) { marker in
-                    Button(action: {
-                        self.audioPlayer.currentTime = marker // 마커로 이동
-                        self.progress = CGFloat(marker / self.duration)
-                        self.formattedProgress = self.formattedTime(marker)
-                        self.audioPlayer.play() // 이동 후 재생
-                        self.isPlaying = true
-                    }) {
-                        Text("Marker at \(self.formattedTime(marker))")
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                            .padding(.vertical, 2)
-                    }
-                    .padding(.horizontal)
-                    .contextMenu {
-                        Button(role: .destructive, action: {
-                            if let index = self.markers.firstIndex(of: marker) {
-                                self.markers.remove(at: index)
-                            }
-                        }) {
-                            Text("Delete")
-                            Image(systemName: "trash")
-                        }
+            ScrollView {
+                VStack {
+                    ForEach(markers, id: \.self) { marker in
                         Button(action: {
-                            // 수정 기능
+                            self.audioPlayer.currentTime = marker // 마커로 이동
+                            self.progress = CGFloat(marker / self.duration)
+                            self.formattedProgress = self.formattedTime(marker)
+                            self.audioPlayer.play() // 이동 후 재생
+                            self.isPlaying = true
                         }) {
-                            Text("Edit")
-                            Image(systemName: "pencil")
+                            Text("Marker at \(self.formattedTime(marker))")
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                                .padding(.vertical, 2)
+                        }
+                        .padding(.horizontal)
+                        .contextMenu {
+                            Button(role: .destructive, action: {
+                                if let index = self.markers.firstIndex(of: marker) {
+                                    self.markers.remove(at: index)
+                                }
+                            }) {
+                                Text("Delete")
+                                Image(systemName: "trash")
+                            }
+                            Button(action: {
+                                // 수정 기능
+                            }) {
+                                Text("Edit")
+                                Image(systemName: "pencil")
+                            }
                         }
                     }
                 }
