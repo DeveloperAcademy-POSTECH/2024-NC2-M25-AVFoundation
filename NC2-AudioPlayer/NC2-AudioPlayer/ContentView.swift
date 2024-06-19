@@ -20,6 +20,10 @@ struct ContentView: View {
     @State private var progress: CGFloat = 0.0 // 슬라이더 진행률
     @State private var formattedDuration: String = "00:00" // 포맷된 총 재생 시간
     @State private var formattedProgress: String = "00:00" // 포맷된 현재 재생 시간
+    
+    @State private var albumArtwork: UIImage?
+    @State private var title: String = ""
+    @State private var artist: String = ""
 
     var body: some View {
         VStack {
@@ -32,15 +36,40 @@ struct ContentView: View {
                 }
                 .padding()
                 
+//                ZStack {
+//                    if let audioPlayer = audioPlayer {
+//                        Text("Selected file: \(audioPlayer.url?.lastPathComponent ?? "None")")
+//                    } else {
+//                        Text("Selected file: None")
+//                            .opacity(0)
+//                    }
+//                }
+//                .frame(height: 20)
                 ZStack {
                     if let audioPlayer = audioPlayer {
-                        Text("Selected file: \(audioPlayer.url?.lastPathComponent ?? "None")")
+                        HStack {
+                            if let albumArtwork = albumArtwork {
+                                Image(uiImage: albumArtwork)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 100, height: 100)
+                                    .cornerRadius(10)
+                            }
+                            VStack (alignment: .leading) {
+                                Text("\(title)")
+                                    .font(.subheadline)
+                                Text("\(artist)")
+                                    .font(.caption)
+                            }
+                            
+                        }
                     } else {
                         Text("Selected file: None")
                             .opacity(0)
                     }
                 }
-                .frame(height: 20)
+                .frame(height: 140)
+                .padding()
             }
             .frame(maxWidth: .infinity)
             
@@ -225,6 +254,9 @@ struct ContentView: View {
             self.audioPlayer = try AVAudioPlayer(contentsOf: URL(fileURLWithPath: path))
             self.audioPlayer.prepareToPlay()
             
+            // MetaData 가져오기
+            extractMetadata(from: path)
+            
             formattedDuration = formatter.string(from: TimeInterval(self.audioPlayer.duration))!
             duration = self.audioPlayer.duration
             
@@ -241,6 +273,7 @@ struct ContentView: View {
             }
             
             setupRemoteTransportControls()
+            remoteCommandInfoCenterSetting()
             
         } catch {
             print("Error initializing audio player: \(error.localizedDescription)")
@@ -261,6 +294,7 @@ struct ContentView: View {
         return formatter.string(from: time)!
     }
     
+    //MARK: - 백그라운드 Control Center에서 조작
     private func setupRemoteTransportControls() {
         let commandCenter = MPRemoteCommandCenter.shared()
 
@@ -273,6 +307,71 @@ struct ContentView: View {
             self.audioPlayer.pause()
             return MPRemoteCommandHandlerStatus.success
         }
+    }
+    
+    //MARK: - Control Center에 앨범커버, 재생시간 정보, 보여주기
+    private func remoteCommandInfoCenterSetting() {
+        let nowPlayingInfoCenter = MPNowPlayingInfoCenter.default()
+        var nowPlayingInfo = nowPlayingInfoCenter.nowPlayingInfo ?? [String: Any]()
+        
+        guard let url = Bundle.main.url(forResource: "Supernova", withExtension: "mp3") else {
+            print("Audio file not found")
+            return
+        }
+
+        let asset = AVAsset(url: url)
+        
+        // 앨범 커버 이미지 추출
+        if let artworkData = extractArtworkData(from: asset) {
+            let artworkImage = UIImage(data: artworkData)
+            let artwork = MPMediaItemArtwork(boundsSize: artworkImage?.size ?? CGSize.zero, requestHandler: { size in
+                return artworkImage ?? UIImage()
+            })
+            nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork
+        }
+        
+        nowPlayingInfo[MPMediaItemPropertyTitle] = "Supernova"
+        nowPlayingInfo[MPMediaItemPropertyArtist] = "aespa"
+        nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = audioPlayer.duration
+        nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = audioPlayer.rate
+        nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = audioPlayer.currentTime
+        
+        nowPlayingInfoCenter.nowPlayingInfo = nowPlayingInfo
+    }
+    
+    private func extractMetadata(from path: String) {
+        let url = URL(fileURLWithPath: path)
+        let asset = AVAsset(url: url)
+        
+        // 앨범 커버 가져오기
+        if let artworkData = extractArtworkData(from: asset) {
+            albumArtwork = UIImage(data: artworkData)
+        }
+        
+        // 노래 제목, 아티스트 이름 가져오기
+        let metadata = asset.metadata
+        for item in metadata {
+            if let commonKey = item.commonKey,
+               let stringValue = item.stringValue {
+                switch commonKey {
+                case .commonKeyTitle:
+                    title = stringValue
+                case .commonKeyArtist:
+                    artist = stringValue
+                default:
+                    break
+                }
+            }
+        }
+    }
+
+    private func extractArtworkData(from asset: AVAsset) -> Data? {
+        for metadata in asset.commonMetadata {
+            if metadata.commonKey == .commonKeyArtwork, let data = metadata.value as? Data {
+                return data
+            }
+        }
+        return nil
     }
 
 }

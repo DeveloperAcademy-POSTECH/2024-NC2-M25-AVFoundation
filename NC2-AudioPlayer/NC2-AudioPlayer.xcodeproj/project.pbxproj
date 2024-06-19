@@ -11,7 +11,7 @@
 		510E10832C1FC94A00AF5428 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 510E10822C1FC94A00AF5428 /* ContentView.swift */; };
 		510E10852C1FC94B00AF5428 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 510E10842C1FC94B00AF5428 /* Assets.xcassets */; };
 		510E10882C1FC94B00AF5428 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 510E10872C1FC94B00AF5428 /* Preview Assets.xcassets */; };
-		510E108F2C1FE2AA00AF5428 /* Supernova.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 510E108E2C1FE2AA00AF5428 /* Supernova.mp3 */; };
+		51DC6D622C227BB000174370 /* Supernova.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6D612C227BB000174370 /* Supernova.mp3 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,8 +20,8 @@
 		510E10822C1FC94A00AF5428 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		510E10842C1FC94B00AF5428 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		510E10872C1FC94B00AF5428 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		510E108E2C1FE2AA00AF5428 /* Supernova.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = Supernova.mp3; sourceTree = "<group>"; };
 		51DC6D602C225DD900174370 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		51DC6D612C227BB000174370 /* Supernova.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = Supernova.mp3; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,8 +54,8 @@
 		510E107F2C1FC94A00AF5428 /* NC2-AudioPlayer */ = {
 			isa = PBXGroup;
 			children = (
+				51DC6D612C227BB000174370 /* Supernova.mp3 */,
 				51DC6D602C225DD900174370 /* Info.plist */,
-				510E108E2C1FE2AA00AF5428 /* Supernova.mp3 */,
 				510E10802C1FC94A00AF5428 /* NC2_AudioPlayerApp.swift */,
 				510E10822C1FC94A00AF5428 /* ContentView.swift */,
 				510E10842C1FC94B00AF5428 /* Assets.xcassets */,
@@ -132,7 +132,7 @@
 			files = (
 				510E10882C1FC94B00AF5428 /* Preview Assets.xcassets in Resources */,
 				510E10852C1FC94B00AF5428 /* Assets.xcassets in Resources */,
-				510E108F2C1FE2AA00AF5428 /* Supernova.mp3 in Resources */,
+				51DC6D622C227BB000174370 /* Supernova.mp3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
