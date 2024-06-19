@@ -207,10 +207,7 @@ struct ContentView: View {
             //MARK: - 음원 재생, 정지, 5초전, 후
             HStack {
                 Button(action: {
-                    let newTime = max(self.audioPlayer.currentTime - 5, 0)
-                    self.audioPlayer.currentTime = newTime
-                    self.progress = CGFloat(newTime / self.duration)
-                    self.formattedProgress = self.formattedTime(newTime)
+                    backward5Sec()
                 }) {
                     Image(systemName: "gobackward.5")
                         .resizable()
@@ -236,10 +233,7 @@ struct ContentView: View {
                 Spacer()
                 
                 Button(action: {
-                    let newTime = min(self.audioPlayer.currentTime + 5, self.duration)
-                    self.audioPlayer.currentTime = newTime
-                    self.progress = CGFloat(newTime / self.duration)
-                    self.formattedProgress = self.formattedTime(newTime)
+                    forward5Sec()
                 }) {
                     Image(systemName: "goforward.5")
                         .resizable()
@@ -313,6 +307,25 @@ struct ContentView: View {
         return formatter.string(from: time)!
     }
     
+    func seekToTime(to time: TimeInterval) {
+            guard let player = audioPlayer else { return }
+            player.currentTime = time
+            progress = CGFloat(time / player.duration)
+            formattedProgress = formattedTime(time)
+        }
+    
+    func backward5Sec() {
+            guard let player = audioPlayer else { return }
+            let newTime = max(player.currentTime - 5, 0)
+            seekToTime(to: newTime)
+        }
+        
+        func forward5Sec() {
+            guard let player = audioPlayer else { return }
+            let newTime = min(player.currentTime + 5, player.duration)
+            seekToTime(to: newTime)
+        }
+    
     //MARK: - 백그라운드 Control Center에서 조작
     private func setupRemoteTransportControls() {
         let commandCenter = MPRemoteCommandCenter.shared()
@@ -326,6 +339,20 @@ struct ContentView: View {
             self.audioPlayer.pause()
             return MPRemoteCommandHandlerStatus.success
         }
+        
+        commandCenter.skipBackwardCommand.addTarget { (commandEvent) -> MPRemoteCommandHandlerStatus in
+                    self.backward5Sec()
+                    return .success
+                }
+                
+                commandCenter.skipForwardCommand.addTarget { (commandEvent) -> MPRemoteCommandHandlerStatus in
+                    self.forward5Sec()
+                    return .success
+                }
+                
+                // 커맨드 센터에 5초 간격 설정
+                commandCenter.skipBackwardCommand.preferredIntervals = [5]
+                commandCenter.skipForwardCommand.preferredIntervals = [5]
     }
     
     //MARK: - Control Center에 앨범커버, 재생시간 정보, 보여주기
