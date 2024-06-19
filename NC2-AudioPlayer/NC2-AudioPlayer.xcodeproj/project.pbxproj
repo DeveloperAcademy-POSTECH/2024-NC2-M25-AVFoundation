@@ -21,6 +21,7 @@
 		510E10842C1FC94B00AF5428 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		510E10872C1FC94B00AF5428 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		510E108E2C1FE2AA00AF5428 /* Supernova.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = Supernova.mp3; sourceTree = "<group>"; };
+		51DC6D602C225DD900174370 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,6 +54,7 @@
 		510E107F2C1FC94A00AF5428 /* NC2-AudioPlayer */ = {
 			isa = PBXGroup;
 			children = (
+				51DC6D602C225DD900174370 /* Info.plist */,
 				510E108E2C1FE2AA00AF5428 /* Supernova.mp3 */,
 				510E10802C1FC94A00AF5428 /* NC2_AudioPlayerApp.swift */,
 				510E10822C1FC94A00AF5428 /* ContentView.swift */,
@@ -279,6 +281,8 @@
 				DEVELOPMENT_TEAM = 2U3B7G3F2A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "NC2-AudioPlayer/Info.plist";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -308,6 +312,8 @@
 				DEVELOPMENT_TEAM = 2U3B7G3F2A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "NC2-AudioPlayer/Info.plist";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

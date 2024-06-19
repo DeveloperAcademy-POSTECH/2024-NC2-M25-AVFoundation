@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AVFoundation
+import MediaPlayer
 
 struct ContentView: View {
     @State var audioPlayer: AVAudioPlayer!
@@ -57,7 +58,7 @@ struct ContentView: View {
             Divider()
 
             //MARK: - 마커 리스트
-            List {
+            VStack {
                 ForEach(markers, id: \.self) { marker in
                     Button(action: {
                         self.audioPlayer.currentTime = marker // 마커로 이동
@@ -67,10 +68,34 @@ struct ContentView: View {
                         self.isPlaying = true
                     }) {
                         Text("Marker at \(self.formattedTime(marker))")
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                            .padding(.vertical, 2)
+                    }
+                    .padding(.horizontal)
+                    .contextMenu {
+                        Button(role: .destructive, action: {
+                            if let index = self.markers.firstIndex(of: marker) {
+                                self.markers.remove(at: index)
+                            }
+                        }) {
+                            Text("Delete")
+                            Image(systemName: "trash")
+                        }
+                        Button(action: {
+                            // 수정 기능
+                        }) {
+                            Text("Edit")
+                            Image(systemName: "pencil")
+                        }
                     }
                 }
             }
             .disabled(audioPlayer == nil)
+            Spacer()
             
             //MARK: - 배속 조절
             HStack {
@@ -178,7 +203,6 @@ struct ContentView: View {
             .padding()
             .disabled(audioPlayer == nil)
             
-            Spacer()
         }
     }
 
@@ -187,35 +211,37 @@ struct ContentView: View {
         formatter.allowedUnits = [.minute, .second]
         formatter.unitsStyle = .positional
         formatter.zeroFormattingBehavior = [.pad]
-
+        
         guard let path = Bundle.main.path(forResource: "Supernova.mp3", ofType: nil) else {
             print("File not found")
             return
         }
-
+        
         do {
             // AVAudioSession 설정
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
             try AVAudioSession.sharedInstance().setActive(true)
-
+            
             self.audioPlayer = try AVAudioPlayer(contentsOf: URL(fileURLWithPath: path))
             self.audioPlayer.prepareToPlay()
-            self.audioPlayer.enableRate = true // 배속 설정 가능하도록 함
-
+            
             formattedDuration = formatter.string(from: TimeInterval(self.audioPlayer.duration))!
             duration = self.audioPlayer.duration
-
+            
             Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
                 if !self.audioPlayer.isPlaying {
                     self.isPlaying = false
                 }
-
+                
                 if !self.isDragging {
                     self.currentTime = self.audioPlayer.currentTime
                     self.progress = CGFloat(self.audioPlayer.currentTime / self.audioPlayer.duration)
                     self.formattedProgress = formatter.string(from: TimeInterval(self.audioPlayer.currentTime))!
                 }
             }
+            
+            setupRemoteTransportControls()
+            
         } catch {
             print("Error initializing audio player: \(error.localizedDescription)")
         }
@@ -234,6 +260,21 @@ struct ContentView: View {
         formatter.zeroFormattingBehavior = [.pad]
         return formatter.string(from: time)!
     }
+    
+    private func setupRemoteTransportControls() {
+        let commandCenter = MPRemoteCommandCenter.shared()
+
+        commandCenter.playCommand.addTarget { (commandEvent) -> MPRemoteCommandHandlerStatus in
+            self.audioPlayer.play()
+            return MPRemoteCommandHandlerStatus.success
+        }
+
+        commandCenter.pauseCommand.addTarget { (commandEvent) -> MPRemoteCommandHandlerStatus in
+            self.audioPlayer.pause()
+            return MPRemoteCommandHandlerStatus.success
+        }
+    }
+
 }
 
 
