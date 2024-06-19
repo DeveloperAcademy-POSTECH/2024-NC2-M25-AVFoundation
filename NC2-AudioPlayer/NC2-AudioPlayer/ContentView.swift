@@ -118,9 +118,10 @@ struct ContentView: View {
                 }
 
                 Text(String(format: "%.1fx", self.playbackRate))
+                    .foregroundColor(audioPlayer == nil ? Color.secondary : Color.primary)
                     .onTapGesture {
-                        self.playbackRate = 1.0
-                        self.updatePlaybackRate()
+                            self.playbackRate = 1.0
+                            self.updatePlaybackRate()
                     }
             }
             .frame(width: 60, height: 30)
@@ -133,6 +134,7 @@ struct ContentView: View {
         .padding()
         .disabled(audioPlayer == nil)
     }
+
 
     private var progressSlider: some View {
         VStack {
@@ -271,6 +273,7 @@ struct ContentView: View {
 
             self.audioPlayer = try AVAudioPlayer(contentsOf: URL(fileURLWithPath: path))
             self.audioPlayer.prepareToPlay()
+            self.audioPlayer.enableRate = true
 
             extractMetadata(from: path)
 
@@ -294,12 +297,6 @@ struct ContentView: View {
         } catch {
             print("Error initializing audio player: \(error.localizedDescription)")
         }
-    }
-
-    private func updatePlaybackRate() {
-        guard let audioPlayer = audioPlayer else { return }
-        audioPlayer.rate = playbackRate
-        audioPlayer.enableRate = true
     }
 
     private func formattedTime(_ time: TimeInterval) -> String {
@@ -350,6 +347,11 @@ struct ContentView: View {
             self.playbackRate += 0.1
             self.updatePlaybackRate()
         }
+    }
+    
+    private func updatePlaybackRate() {
+        guard let audioPlayer = audioPlayer else { return }
+        audioPlayer.rate = playbackRate
     }
 
     // MARK: - Remote Control Center Functions
@@ -431,7 +433,6 @@ struct ContentView: View {
         }
     }
 
-
     private func extractArtworkData(from asset: AVAsset) -> Data? {
         for metadata in asset.commonMetadata {
             if metadata.commonKey == .commonKeyArtwork, let data = metadata.value as? Data {
@@ -441,8 +442,6 @@ struct ContentView: View {
         return nil
     }
 }
-
-
 
 #Preview {
     ContentView()
