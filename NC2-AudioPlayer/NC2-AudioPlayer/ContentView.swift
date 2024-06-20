@@ -391,8 +391,6 @@ struct ContentView: View {
             return
         }
 
-        extractMetadata(from: path)
-
         if let albumArtwork = albumArtwork {
             let artwork = MPMediaItemArtwork(boundsSize: albumArtwork.size, requestHandler: { size in
                 return albumArtwork
@@ -403,15 +401,13 @@ struct ContentView: View {
         nowPlayingInfo[MPMediaItemPropertyTitle] = title
         nowPlayingInfo[MPMediaItemPropertyArtist] = artist
         nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = audioPlayer.duration
-        nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = audioPlayer.rate
         nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = audioPlayer.currentTime
 
         nowPlayingInfoCenter.nowPlayingInfo = nowPlayingInfo
     }
 
     private func extractMetadata(from path: String) {
-        let url = URL(fileURLWithPath: path)
-        let asset = AVAsset(url: url)
+        let asset = AVAsset(url: URL(fileURLWithPath: path))
 
         // 앨범 커버 가져오기
         for metadata in asset.commonMetadata {
