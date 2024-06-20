@@ -26,22 +26,22 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
-            audioFileSelector
+            audioFileSelectView
             Spacer().frame(height: 20)
             addMarkerButton
             Divider()
-            markerList
+            markerListView
             Spacer()
-            playbackRateControl
+            playbackRateControlView
             progressSlider
-            playbackControls
+            playbackControlView
         }
     }
 
-    // MARK: - Subviews
-    private var audioFileSelector: some View {
+    // MARK: - 기능별 뷰 나누기
+    private var audioFileSelectView: some View {
         VStack {
-            Button(action: initialiseAudioPlayer) {
+            Button(action: initAudioPlayer) {
                 Text("Select Audio File")
             }
             .padding()
@@ -70,7 +70,7 @@ struct ContentView: View {
                         Spacer()
                     }
                 } else {
-                    defaultAudioPlaceholder
+                    audioPlaceholderView
                 }
             }
             .frame(height: 100)
@@ -89,7 +89,7 @@ struct ContentView: View {
         .disabled(audioPlayer == nil)
     }
 
-    private var markerList: some View {
+    private var markerListView: some View {
         ScrollView {
             VStack {
                 ForEach(markers, id: \.self) { marker in
@@ -104,7 +104,7 @@ struct ContentView: View {
         .disabled(audioPlayer == nil)
     }
 
-    private var playbackRateControl: some View {
+    private var playbackRateControlView: some View {
         HStack {
             Button(action: decreasePlaybackRate) {
                 Image(systemName: "minus")
@@ -135,7 +135,6 @@ struct ContentView: View {
         .disabled(audioPlayer == nil)
     }
 
-
     private var progressSlider: some View {
         VStack {
             Slider(value: Binding(get: {
@@ -159,7 +158,7 @@ struct ContentView: View {
         }
     }
 
-    private var playbackControls: some View {
+    private var playbackControlView: some View {
         HStack {
             Button(action: backward5Sec) {
                 Image(systemName: "gobackward.5")
@@ -190,7 +189,7 @@ struct ContentView: View {
         .disabled(audioPlayer == nil)
     }
 
-    private var defaultAudioPlaceholder: some View {
+    private var audioPlaceholderView: some View {
         HStack {
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.gray)
@@ -217,7 +216,6 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Helper Views
     private func markerButton(marker: TimeInterval) -> some View {
         Button(action: {
             self.audioPlayer.currentTime = marker
@@ -255,8 +253,8 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Audio Player Functions
-    private func initialiseAudioPlayer() {
+    // MARK: - 음원 재생, 조작 함수
+    private func initAudioPlayer() {
         let formatter = DateComponentsFormatter()
         formatter.allowedUnits = [.minute, .second]
         formatter.unitsStyle = .positional
@@ -292,8 +290,8 @@ struct ContentView: View {
                 }
             }
 
-            setupRemoteTransportControls()
-            remoteCommandInfoCenterSetting()
+            setupControlCenterControls()
+            remoteControlCenterInfo()
         } catch {
             print("Error initializing audio player: \(error.localizedDescription)")
         }
@@ -318,12 +316,14 @@ struct ContentView: View {
         guard let player = audioPlayer else { return }
         let newTime = max(player.currentTime - 5, 0)
         seekToTime(to: newTime)
+        updateNowPlayingControlCenter()
     }
 
     private func forward5Sec() {
         guard let player = audioPlayer else { return }
         let newTime = min(player.currentTime + 5, player.duration)
         seekToTime(to: newTime)
+        updateNowPlayingControlCenter()
     }
 
     private func togglePlayback() {
@@ -354,8 +354,8 @@ struct ContentView: View {
         audioPlayer.rate = playbackRate
     }
 
-    // MARK: - Remote Control Center Functions
-    private func setupRemoteTransportControls() {
+    // MARK: - 제어 센터 함수
+    private func setupControlCenterControls() {
         let commandCenter = MPRemoteCommandCenter.shared()
 
         commandCenter.playCommand.addTarget { (commandEvent) -> MPRemoteCommandHandlerStatus in
@@ -382,7 +382,7 @@ struct ContentView: View {
         commandCenter.skipForwardCommand.preferredIntervals = [5]
     }
 
-    private func remoteCommandInfoCenterSetting() {
+    private func remoteControlCenterInfo() {
         let nowPlayingInfoCenter = MPNowPlayingInfoCenter.default()
         var nowPlayingInfo = nowPlayingInfoCenter.nowPlayingInfo ?? [String: Any]()
 
@@ -413,10 +413,14 @@ struct ContentView: View {
         let url = URL(fileURLWithPath: path)
         let asset = AVAsset(url: url)
 
-        if let artworkData = extractArtworkData(from: asset) {
-            albumArtwork = UIImage(data: artworkData)
+        // 앨범 커버 가져오기
+        for metadata in asset.commonMetadata {
+            if metadata.commonKey == .commonKeyArtwork, let data = metadata.value as? Data {
+                albumArtwork = UIImage(data: data)
+            }
         }
 
+        // 음원 타이틀, 아티스트 가져오기
         let metadata = asset.metadata
         for item in metadata {
             if let commonKey = item.commonKey,
@@ -432,14 +436,15 @@ struct ContentView: View {
             }
         }
     }
+    
+    private func updateNowPlayingControlCenter() {
+        let nowPlayingInfoCenter = MPNowPlayingInfoCenter.default()
+        var nowPlayingInfo = nowPlayingInfoCenter.nowPlayingInfo ?? [String: Any]()
 
-    private func extractArtworkData(from asset: AVAsset) -> Data? {
-        for metadata in asset.commonMetadata {
-            if metadata.commonKey == .commonKeyArtwork, let data = metadata.value as? Data {
-                return data
-            }
-        }
-        return nil
+        nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = audioPlayer.currentTime
+        nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = audioPlayer.rate
+
+        nowPlayingInfoCenter.nowPlayingInfo = nowPlayingInfo
     }
 }
 
