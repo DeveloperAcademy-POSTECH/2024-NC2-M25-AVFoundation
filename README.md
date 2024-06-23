@@ -1,5 +1,4 @@
 # 2024-NC2-M25-AVFoundation
-TBU  
 
 ## 🎥 Youtube Link
 (추후 만들어진 유튜브 링크 추가)
@@ -70,4 +69,186 @@ MediaPlayer: 음원 재생은 일반적으로 백그라운드에서도 재생이
 </details>
 
 ## 🛠️ About Code
-(핵심 코드에 대한 설명 추가)
+<details>
+  <summary>오디오 객체 생성</summary>
+  
+  ```swift 
+  @State var audioPlayer: AVAudioPlayer!
+  ```
+</details>
+
+<details>
+  <summary>음원 불러오기 및 제어</summary>
+
+  ### 음원 불러오기
+    
+  ```swift 
+  private func initAudioPlayer()
+  ```
+
+  ```swift 
+  guard let path = Bundle.main.path(forResource: "Supernova.mp3", ofType: nil) else {
+            print("File not found")
+            return
+        }
+  ```
+
+  ### 상태 설정
+
+  ```swift 
+  do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
+            try AVAudioSession.sharedInstance().setActive(true)
+
+            self.audioPlayer = try AVAudioPlayer(contentsOf: URL(fileURLWithPath: path))
+            self.audioPlayer.prepareToPlay()
+            self.audioPlayer.enableRate = true
+
+            extractMetadata(from: path)
+
+            formattedDuration = formatter.string(from: TimeInterval(self.audioPlayer.duration))!
+            duration = self.audioPlayer.duration
+
+            Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+                if !self.audioPlayer.isPlaying {
+                    self.isPlaying = false
+                }
+
+                if !self.isDragging {
+                    self.currentTime = self.audioPlayer.currentTime
+                    self.progress = CGFloat(self.audioPlayer.currentTime / self.audioPlayer.duration)
+                    self.formattedProgress = formatter.string(from: TimeInterval(self.audioPlayer.currentTime))!
+                }
+            }
+
+            setupControlCenterControls()
+            remoteControlCenterInfo()
+        }
+  ```
+
+</details>
+
+<details>
+  <summary>제어센터 내 버튼 구현</summary>
+  
+```MPRemoteCommandCenter```
+
+  ``` swift
+  private func setupControlCenterControls() {
+        let commandCenter = MPRemoteCommandCenter.shared()
+
+        commandCenter.playCommand.addTarget { (commandEvent) -> MPRemoteCommandHandlerStatus in
+            self.audioPlayer.play()
+            return MPRemoteCommandHandlerStatus.success
+        }
+
+        commandCenter.pauseCommand.addTarget { (commandEvent) -> MPRemoteCommandHandlerStatus in
+            self.audioPlayer.pause()
+            return MPRemoteCommandHandlerStatus.success
+        }
+
+        commandCenter.skipBackwardCommand.addTarget { (commandEvent) -> MPRemoteCommandHandlerStatus in
+            self.backward5Sec()
+            return .success
+        }
+
+        commandCenter.skipForwardCommand.addTarget { (commandEvent) -> MPRemoteCommandHandlerStatus in
+            self.forward5Sec()
+            return .success
+        }
+
+        commandCenter.skipBackwardCommand.preferredIntervals = [5]
+        commandCenter.skipForwardCommand.preferredIntervals = [5]
+    }
+  ```
+  - MediaPlayer의 ```MPRemoteCommandCenter```를 사용하여 제어센터의 버튼을 눌렀을 때 어떤 이벤트를 발생시킬건지 지정해줍니다.  
+  재생, 정지, 5초 앞으로, 뒤로 가는 기능을 구현하였습니다.
+
+</details>
+
+<details>
+  <summary>제어센터 내 음원 정보 표시</summary>
+
+  ```MPNowPlayingInfoCenter```
+  ``` swift
+  private func remoteControlCenterInfo() {
+        let nowPlayingInfoCenter = MPNowPlayingInfoCenter.default()
+        var nowPlayingInfo = nowPlayingInfoCenter.nowPlayingInfo ?? [String: Any]()
+
+        guard let path = Bundle.main.path(forResource: "Supernova", ofType: "mp3") else {
+            print("Audio file not found")
+            return
+        }
+
+        if let albumArtwork = albumArtwork {
+            let artwork = MPMediaItemArtwork(boundsSize: albumArtwork.size, requestHandler: { size in
+                return albumArtwork
+            })
+            nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork
+        }
+
+        nowPlayingInfo[MPMediaItemPropertyTitle] = title
+        nowPlayingInfo[MPMediaItemPropertyArtist] = artist
+        nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = audioPlayer.duration
+        nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = audioPlayer.currentTime
+
+        nowPlayingInfoCenter.nowPlayingInfo = nowPlayingInfo
+    }
+  ```
+  - 현재 재생 중인 미디어의 커버 사진이나 노래 제목, 아티스트와 같은 정보들을 제어센터 객체에 초기화 하여 보여줍니다.
+</details>
+
+<details>
+  <summary>마커 기능</summary>
+  
+  ### 마커 추가하기 버튼
+
+  ```swift
+  @State private var markers: [TimeInterval] = []
+  ```
+
+  - ```TimeInterval```을 마커배열에 저장합니다.
+
+  ### 마커 리스트
+
+  ```swift
+  private var markerListView: some View {
+        ScrollView {
+            VStack {
+                ForEach(markers, id: \.self) { marker in
+                    markerButton(marker: marker)
+                        .padding(.horizontal)
+                        .contextMenu {
+                            markerContextMenu(marker: marker)
+                        }
+                }
+            }
+        }
+        .disabled(audioPlayer == nil)
+    }
+  ```
+  - 등록한 마커를 리스트 형태로 보여줍니다.
+
+  ### 마커
+ ```swift
+private func markerButton(marker: TimeInterval) -> some View {
+        Button(action: {
+            self.audioPlayer.currentTime = marker
+            self.progress = CGFloat(marker / self.duration)
+            self.formattedProgress = self.formattedTime(marker)
+            self.audioPlayer.play()
+            self.isPlaying = true
+        }) {
+            Text("Marker at \(self.formattedTime(marker))")
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(12)
+                .padding(.vertical, 2)
+        }
+    }
+ ```
+ - 생성된 마커를 누르면 음원의 현재시간과 프로그래스 바 위치를 업데이트 하여 해당 시간으로 이동함과 동시에 재생됩니다.
+
+</details>
